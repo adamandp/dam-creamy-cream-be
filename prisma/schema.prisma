@@ -1,0 +1,452 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id          String      @id @default(uuid()) @db.Uuid
+  roleId      String      @map("role_id") @db.Uuid
+  username    String      @unique @db.VarChar(50)
+  email       String?     @unique @db.VarChar(255)
+  phoneNumber String?     @unique @map("phone_number") @db.VarChar(100)
+  password    String      @db.VarChar(255)
+  fullName    String      @map("full_name") @db.VarChar(100)
+  birthDate   DateTime?   @map("birth_date") @db.Date
+  imageUrl    String?     @map("image_url") @db.VarChar(255)
+  gender      GenderType? @map("gender")
+  isActive    Boolean     @default(false) @map("is_active") @db.Boolean
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  roles             Role               @relation(fields: [roleId], references: [id])
+  cart              Cart?
+  userTokens        UserToken[]
+  orders            Order[]
+  reviews           Review[]
+  userVouchers      UserVoucher[]
+  productAnalytics  ProductAnalytics[]
+  userNotifications UserNotification[]
+  addresses         Address[]
+
+  @@map("users")
+}
+
+model UserToken {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  token       String   @unique @db.VarChar(255)
+  browserInfo String   @db.Text
+  expiredAt   DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User @relation(fields: [userId], references: [id])
+
+  @@map("user_tokens")
+}
+
+model Address {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @map("user_id") @db.Uuid
+  recipientName        String   @map("recipient_name") @db.VarChar(100)
+  recipientPhoneNumber String   @map("recipient_phone_number") @db.VarChar(100)
+  province             String   @db.VarChar(100)
+  city                 String   @db.VarChar(100)
+  subdistrict          String   @db.VarChar(100)
+  village              String   @db.VarChar(100)
+  postalCode           String   @map("postal_code") @db.VarChar(50)
+  address              String   @db.VarChar(255)
+  isPrimary            Boolean  @default(false) @map("is_primary") @db.Boolean
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  users  User    @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  discountId  String?  @map("discount_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  imageUrl    String?  @map("image_url") @db.VarChar(255)
+  description String?  @db.VarChar(255)
+  price       Float
+  isActive    Boolean  @map("is_active") @db.Boolean
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  categories       Category           @relation(fields: [categoryId], references: [id])
+  productDiscounts ProductDiscount?
+  inventory        Inventory?
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  reviews          Review[]
+  vouchers         Voucher[]
+  productAnalytics ProductAnalytics[]
+
+  @@map("products")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  isActive    Boolean  @default(true) @map("is_active") @db.Boolean
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@map("category")
+}
+
+model Inventory {
+  id               String   @id @default(uuid()) @db.Uuid
+  productId        String   @unique @map("product_id") @db.Uuid
+  quantity         Int      @db.Integer
+  reservedQuantity Int      @default(0) @map("reserved_quantity")
+  isActive         Boolean  @map("is_active") @db.Boolean
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  products Product @relation(fields: [productId], references: [id])
+
+  @@map("inventory")
+}
+
+model Cart {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  cartId    String   @map("cart_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  quantity  Int      @db.Integer
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  carts    Cart    @relation(fields: [cartId], references: [id])
+  products Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  addressId      String      @map("address_id") @db.Uuid
+  voucherAmount  Float       @default(0) @map("voucher_amount")
+  discountAmount Float       @default(0) @map("discount_amount")
+  totalPrice     Float       @map("total_price")
+  finalPrice     Float       @map("final_price")
+  status         OrderStatus @default(PENDING)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  addresses  Address        @relation(fields: [addressId], references: [id])
+  users      User           @relation(fields: [userId], references: [id])
+  vouchers   OrderVoucher[]
+  orderItems OrderItem[]
+  payments   Payment[]
+  shipments  Shipment[]
+
+  @@map("orders")
+}
+
+model OrderVoucher {
+  orderId   String  @map("order_id") @db.Uuid
+  voucherId String  @map("voucher_id") @db.Uuid
+  order     Order   @relation(fields: [orderId], references: [id])
+  voucher   Voucher @relation(fields: [voucherId], references: [id])
+
+  @@id([orderId, voucherId])
+  @@map("order_vouchers")
+}
+
+model OrderItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  discountId     String?  @map("discount_id") @db.Uuid
+  discountAmount Float    @default(0) @map("discount_amount")
+  price          Float
+  finalPrice     Float
+  quantity       Int      @db.Integer
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  orders    Order     @relation(fields: [orderId], references: [id])
+  products  Product   @relation(fields: [productId], references: [id])
+  discounts Discount? @relation(fields: [discountId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderId         String        @map("order_id") @db.Uuid
+  method          String        @db.VarChar(50)
+  methodType      String        @map("method_type") @db.VarChar(50)
+  amount          Float
+  status          PaymentStatus @default(PENDING)
+  transactionCode String?       @map("transaction_code") @db.VarChar(255)
+  transactionId   String?       @unique @map("transaction_id") @db.VarChar(255)
+  expiryDate      DateTime?     @map("expiry_date")
+  paidAt          DateTime?     @map("paid_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  orders Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Shipment {
+  id             String         @id @default(uuid()) @db.Uuid
+  orderId        String         @map("order_id") @db.Uuid
+  courier        String         @db.VarChar(50)
+  service        String         @db.VarChar(50)
+  cost           Float
+  estimated      DateTime
+  deliveredAt    DateTime?      @map("delivered_at")
+  description    String?        @db.VarChar(255)
+  trackingNumber String?        @map("tracking_number") @db.VarChar(50)
+  status         ShipmentStatus @default(PENDING)
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  orders Order @relation(fields: [orderId], references: [id])
+
+  @@map("shipments")
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  rating    Int      @db.Integer
+  comment   String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users    User    @relation(fields: [userId], references: [id])
+  products Product @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}
+
+model Discount {
+  id            String       @id @default(uuid()) @db.Uuid
+  name          String       @db.VarChar(50)
+  discountType  DiscountType @map("discount_type")
+  value         Float?
+  maxApplied    Int          @map("max_applied") @db.Integer
+  maxRedeemed   Int          @map("max_redeemed") @db.Integer
+  redeemedCount Int          @default(0) @map("redeemed_count") @db.Integer
+  description   String?      @db.VarChar(255)
+  productId     String?      @map("product_id") @db.Uuid
+  quantity      Int?         @db.Integer
+  startDate     DateTime     @map("start_date")
+  endDate       DateTime     @map("end_date")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  productDiscounts ProductDiscount[]
+  orderItems       OrderItem[]
+
+  @@map("discounts")
+}
+
+model ProductDiscount {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @unique @map("product_id") @db.Uuid
+  discountId String   @map("discount_id") @db.Uuid
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  discounts Discount @relation(fields: [discountId], references: [id])
+  products  Product  @relation(fields: [productId], references: [id])
+
+  @@map("product_discounts")
+}
+
+model Voucher {
+  id              String       @id @default(uuid()) @db.Uuid
+  code            String       @db.VarChar(50)
+  name            String       @db.VarChar(50)
+  description     String?      @db.VarChar(255)
+  type            VoucherType
+  group           VoucherGroup
+  value           Float?
+  productId       String?      @map("product_id") @db.Uuid
+  quantity        Int?         @db.Integer
+  minimumPurchase Float        @map("minimum_purchase")
+  isActive        Boolean      @map("is_active")
+  startDate       DateTime     @map("start_date")
+  endDate         DateTime     @map("end_date")
+  maxRedeemed     Int          @map("max_redeemed")
+  redeemedCount   Int          @default(0) @map("redeemed_count")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  products     Product?       @relation(fields: [productId], references: [id])
+  userVouchers UserVoucher[]
+  orders       OrderVoucher[]
+
+  @@map("vouchers")
+}
+
+model UserVoucher {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  voucherId String            @map("voucher_id") @db.Uuid
+  status    UserVoucherStatus @default(CLAIMED)
+  claimedAt DateTime          @map("claimed_at")
+  expiredAt DateTime          @map("expired_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  vouchers Voucher @relation(fields: [voucherId], references: [id])
+  users    User    @relation(fields: [userId], references: [id])
+
+  @@map("user_vouchers")
+}
+
+model ProductAnalytics {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products Product @relation(fields: [productId], references: [id])
+  users    User    @relation(fields: [userId], references: [id])
+
+  @@map("product_analytics")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String   @db.VarChar(50)
+  message   String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userNotifications UserNotification[]
+
+  @@map("notifications")
+}
+
+model UserNotification {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  notificationId String   @map("notification_id") @db.Uuid
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  notifications Notification @relation(fields: [notificationId], references: [id])
+  users         User         @relation(fields: [userId], references: [id])
+
+  @@map("user_notifications")
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+
+  @@map("GENDER_TYPE")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+
+  @@map("ORDER_STATUS")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+
+  @@map("PAYMENT_STATUS")
+}
+
+enum ShipmentStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+
+  @@map("SHIPMENT_STATUS")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+  PRICE
+  FREE_ITEM
+
+  @@map("DISCOUNT_TYPE")
+}
+
+enum VoucherType {
+  PERCENTAGE
+  FIXED
+  FREE_ITEM
+
+  @@map("VOUCHER_TYPE")
+}
+
+enum VoucherGroup {
+  CHECKOUT
+  SHIPPING
+
+  @@map("VOUCHER_GROUP")
+}
+
+enum UserVoucherStatus {
+  USED
+  CLAIMED
+
+  @@map("USER_VOUCHER_STATUS")
+}
