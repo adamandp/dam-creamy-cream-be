@@ -5,10 +5,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { AxiosError } from 'axios';
 import { startCase } from 'lodash';
 import { PinoLogger } from 'nestjs-pino';
+import { PrismaClientKnownRequestError } from '../generated/prisma/internal/prismaNamespace';
 
 @Catch(PrismaClientKnownRequestError)
 export class CommonFilter implements ExceptionFilter {
