@@ -18,6 +18,8 @@ import { VouchersModule } from './model/vouchers/vouchers.module';
 import { UserVouchersModule } from './model/user-vouchers/user-vouchers.module';
 import { ReviewsModule } from './model/reviews/reviews.module';
 import { ShipmentsModule } from './model/shipments/shipments.module';
+import { OrdersModule } from './model/orders/orders.module';
+import { PaymentsModule } from './model/payments/payments.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { ShipmentsModule } from './model/shipments/shipments.module';
     UserVouchersModule,
     ReviewsModule,
     ShipmentsModule,
+    OrdersModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

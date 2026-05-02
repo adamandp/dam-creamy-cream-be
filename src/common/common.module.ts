@@ -8,6 +8,7 @@ import { CommonFilter } from './common.filter';
 import { JwtModule } from '@nestjs/jwt';
 import { HttpModule } from '@nestjs/axios';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Global()
 @Module({
@@ -16,6 +17,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.register({ global: true }),
     HttpModule.register({ global: true }),
+    CqrsModule.forRoot(),
   ],
   providers: [
     PrismaService,
