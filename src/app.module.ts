@@ -13,6 +13,7 @@ import { DiscountsModule } from './model/discounts/discounts.module';
 import { HealthModule } from './model/health/health.module';
 import { InventoryModule } from './model/inventory/inventory.module';
 import { ProductAnalyticsModule } from './model/product-analytics/product-analytics.module';
+import { ProductDiscountsModule } from './model/product-discounts/product-discounts.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ProductAnalyticsModule } from './model/product-analytics/product-analyt
     HealthModule,
     InventoryModule,
     ProductAnalyticsModule,
+    ProductDiscountsModule,
   ],
 })
 export class AppModule {}
