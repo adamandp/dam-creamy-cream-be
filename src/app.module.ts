@@ -16,6 +16,7 @@ import { ProductAnalyticsModule } from './model/product-analytics/product-analyt
 import { ProductDiscountsModule } from './model/product-discounts/product-discounts.module';
 import { VouchersModule } from './model/vouchers/vouchers.module';
 import { UserVouchersModule } from './model/user-vouchers/user-vouchers.module';
+import { ReviewsModule } from './model/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UserVouchersModule } from './model/user-vouchers/user-vouchers.module';
     ProductDiscountsModule,
     VouchersModule,
     UserVouchersModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}
