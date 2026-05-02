@@ -7,6 +7,7 @@ import { AddressesModule } from './model/addresses/addresses.module';
 import { NotificationsModule } from './model/notifications/notifications.module';
 import { UserNotificationsModule } from './model/user-notifications/user-notifications.module';
 import { CategoriesModule } from './model/categories/categories.module';
+import { ProductsModule } from './model/products/products.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CategoriesModule } from './model/categories/categories.module';
     NotificationsModule,
     UserNotificationsModule,
     CategoriesModule,
+    ProductsModule,
   ],
 })
 export class AppModule {}
