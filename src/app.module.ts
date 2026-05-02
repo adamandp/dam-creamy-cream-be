@@ -14,6 +14,7 @@ import { HealthModule } from './model/health/health.module';
 import { InventoryModule } from './model/inventory/inventory.module';
 import { ProductAnalyticsModule } from './model/product-analytics/product-analytics.module';
 import { ProductDiscountsModule } from './model/product-discounts/product-discounts.module';
+import { VouchersModule } from './model/vouchers/vouchers.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ProductDiscountsModule } from './model/product-discounts/product-discou
     InventoryModule,
     ProductAnalyticsModule,
     ProductDiscountsModule,
+    VouchersModule,
   ],
 })
 export class AppModule {}
