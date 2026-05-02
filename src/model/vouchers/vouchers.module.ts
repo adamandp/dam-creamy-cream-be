@@ -7,5 +7,6 @@ import { ProductsModule } from '../products/products.module';
   imports: [ProductsModule],
   controllers: [VouchersController],
   providers: [VouchersService],
+  exports: [VouchersService],
 })
 export class VouchersModule {}

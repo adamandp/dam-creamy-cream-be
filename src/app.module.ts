@@ -15,6 +15,7 @@ import { InventoryModule } from './model/inventory/inventory.module';
 import { ProductAnalyticsModule } from './model/product-analytics/product-analytics.module';
 import { ProductDiscountsModule } from './model/product-discounts/product-discounts.module';
 import { VouchersModule } from './model/vouchers/vouchers.module';
+import { UserVouchersModule } from './model/user-vouchers/user-vouchers.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { VouchersModule } from './model/vouchers/vouchers.module';
     ProductAnalyticsModule,
     ProductDiscountsModule,
     VouchersModule,
+    UserVouchersModule,
   ],
 })
 export class AppModule {}
