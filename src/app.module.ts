@@ -6,8 +6,18 @@ import { SessionModule } from './model/session/session.module';
 import { AddressesModule } from './model/addresses/addresses.module';
 import { NotificationsModule } from './model/notifications/notifications.module';
 import { UserNotificationsModule } from './model/user-notifications/user-notifications.module';
+import { CategoriesModule } from './model/categories/categories.module';
 
 @Module({
-  imports: [CommonModule, RolesModule, UsersModule, SessionModule, AddressesModule, NotificationsModule, UserNotificationsModule],
+  imports: [
+    CommonModule,
+    RolesModule,
+    UsersModule,
+    SessionModule,
+    AddressesModule,
+    NotificationsModule,
+    UserNotificationsModule,
+    CategoriesModule,
+  ],
 })
 export class AppModule {}
