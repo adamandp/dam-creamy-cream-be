@@ -8,6 +8,8 @@ import { NotificationsModule } from './model/notifications/notifications.module'
 import { UserNotificationsModule } from './model/user-notifications/user-notifications.module';
 import { CategoriesModule } from './model/categories/categories.module';
 import { ProductsModule } from './model/products/products.module';
+import { CartsModule } from './model/carts/carts.module';
+import { DiscountsModule } from './model/discounts/discounts.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { ProductsModule } from './model/products/products.module';
     UserNotificationsModule,
     CategoriesModule,
     ProductsModule,
+    CartsModule,
+    DiscountsModule,
   ],
 })
 export class AppModule {}

@@ -8,5 +8,6 @@ import { UploadService } from 'src/common/upload.service';
   imports: [CategoriesModule],
   controllers: [ProductsController],
   providers: [ProductsService, UploadService],
+  exports: [ProductsService],
 })
 export class ProductsModule {}
