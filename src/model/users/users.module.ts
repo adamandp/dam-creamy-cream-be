@@ -8,5 +8,6 @@ import { UploadService } from 'src/common/upload.service';
   imports: [RolesModule],
   controllers: [UsersController],
   providers: [UsersService, UploadService],
+  exports: [UsersService],
 })
 export class UsersModule {}
