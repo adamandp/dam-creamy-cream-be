@@ -17,6 +17,7 @@ import { ProductDiscountsModule } from './model/product-discounts/product-discou
 import { VouchersModule } from './model/vouchers/vouchers.module';
 import { UserVouchersModule } from './model/user-vouchers/user-vouchers.module';
 import { ReviewsModule } from './model/reviews/reviews.module';
+import { ShipmentsModule } from './model/shipments/shipments.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ReviewsModule } from './model/reviews/reviews.module';
     VouchersModule,
     UserVouchersModule,
     ReviewsModule,
+    ShipmentsModule,
   ],
 })
 export class AppModule {}
