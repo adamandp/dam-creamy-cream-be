@@ -12,7 +12,7 @@ import { PrismaClientKnownRequestError } from '../generated/prisma/internal/pris
 
 @Catch(PrismaClientKnownRequestError)
 export class CommonFilter implements ExceptionFilter {
-  constructor(private logger: PinoLogger) {
+  constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(CommonFilter.name);
   }
 

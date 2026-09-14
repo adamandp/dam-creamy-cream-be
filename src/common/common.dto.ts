@@ -1,33 +1,14 @@
 import { createZodDto } from 'nestjs-zod';
+import { coerceNumberMinMax } from 'src/utils/zod.helper';
 import z from 'zod';
 
 const PaginationSchema = z.object({
-  page: z
-    .number({
-      error: `🔢 page must be a valid number. No funky math here! 🚫 {Invalid Number}`,
-    })
-    .min(
-      1,
-      `🔡 page must be at least 1 characters. Keep going! 💪 {Minimum Length}`,
-    )
-    .max(
-      100,
-      `🚀 Whoa! page is too long. Maximum allowed is 100 characters! ✍️ {Maximum Length}`,
-    )
+  page: coerceNumberMinMax('Page', 1, 100)
+    // .transform((val) => Number(val))
     .optional()
     .default(1),
-  limit: z
-    .number({
-      error: `🔢 limit must be a valid number. No funky math here! 🚫 {Invalid Number}`,
-    })
-    .min(
-      1,
-      `🔡 limit must be at least 1 characters. Keep going! 💪 {Minimum Length}`,
-    )
-    .max(
-      100,
-      `🚀 Whoa! limit is too long. Maximum allowed is 100 characters! ✍️ {Maximum Length}`,
-    )
+  limit: coerceNumberMinMax('Limit', 1, 100)
+    // .transform((val) => Number(val))
     .optional()
     .default(10),
 });
