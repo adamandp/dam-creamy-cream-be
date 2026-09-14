@@ -20,6 +20,9 @@ import { ReviewsModule } from './model/reviews/reviews.module';
 import { ShipmentsModule } from './model/shipments/shipments.module';
 import { OrdersModule } from './model/orders/orders.module';
 import { PaymentsModule } from './model/payments/payments.module';
+import { AuthModule } from './model/auth/auth.module';
+import { RecommendationsModule } from './model/recommendations/recommendations.module';
+import { ProductModule } from './model/product/product.module';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { PaymentsModule } from './model/payments/payments.module';
     ShipmentsModule,
     OrdersModule,
     PaymentsModule,
+    AuthModule,
+    RecommendationsModule,
+    ProductModule,
   ],
 })
 export class AppModule {}
