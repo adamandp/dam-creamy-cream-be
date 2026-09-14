@@ -1,22 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UpdateStatusShipmentDto } from './dto/update-shipment.dto';
 import { PinoLogger } from 'nestjs-pino';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import {
   FindAllShipmentDto as FindAllDto,
   FindByIdShipmentDto as FindByIdDto,
   FindManyIdShipmentDto as FindManyDto,
+  ShippingData,
+  ShippingResponse,
 } from './shipments.interface';
 import { WebResponse } from 'src/common/common.interface';
 import { PaginationDto } from 'src/common/common.dto';
 import { NotFoundException } from 'src/exceptions';
-import { Messages } from 'src/utils/message.helper';
+import { ErrorMessage, Messages } from 'src/utils/message.helper';
+import { CostDto } from './dto/cost-shipment.dto';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ShipmentsService {
   constructor(
     private readonly logger: PinoLogger,
     private readonly prisma: PrismaService,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
   ) {
     this.logger.setContext(ShipmentsService.name);
   }
@@ -65,5 +74,38 @@ export class ShipmentsService {
     return await this.prisma.shipment
       .update({ where: { id }, data: body })
       .then(() => ({ message: Messages.update(this.name) }));
+  }
+
+  async cost(request: CostDto): Promise<WebResponse<ShippingData[]>> {
+    const data = {
+      ...request,
+      courier:
+        'jne:sicepat:ide:sap:jnt:ninja:tiki:lion:anteraja:pos:ncs:rex:rpx:sentral:star:wahana:dse',
+    };
+    return await firstValueFrom(
+      this.httpService.post<ShippingResponse>(
+        `${this.configService.get<string>('RAJAONGKIR_BASE_URL')}/calculate/domestic-cost`,
+        data,
+        {
+          headers: {
+            key: this.configService.get<string>('RAJAONGKIR_API_KEY'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      ),
+    )
+      .catch((error) => {
+        this.logger.error(error);
+        throw new InternalServerErrorException(
+          ErrorMessage.create('Shipping cost'),
+        );
+      })
+      .then((response) => {
+        return {
+          message: response.data.meta.message,
+          status: response.data.meta.code,
+          data: response.data.data,
+        };
+      });
   }
 }

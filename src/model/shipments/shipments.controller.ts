@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  Post,
 } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
 import { UpdateStatusShipmentDto } from './dto/update-shipment.dto';
@@ -14,8 +15,10 @@ import { WebResponse } from 'src/common/common.interface';
 import {
   FindAllShipmentDto as FindAllDto,
   FindByIdShipmentDto as FindByIdDto,
+  ShippingData,
 } from './shipments.interface';
 import { PinoLogger } from 'nestjs-pino';
+import type { CostDto } from './dto/cost-shipment.dto';
 
 @Controller('shipments')
 export class ShipmentsController {
@@ -46,5 +49,10 @@ export class ShipmentsController {
     @Body() body: UpdateStatusShipmentDto,
   ): Promise<WebResponse> {
     return this.shipmentsService.updateStatus(id, body);
+  }
+
+  @Post('cost')
+  async cost(@Body() request: CostDto): Promise<WebResponse<ShippingData[]>> {
+    return await this.shipmentsService.cost(request);
   }
 }
