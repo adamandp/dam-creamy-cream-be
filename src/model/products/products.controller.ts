@@ -21,6 +21,7 @@ import {
   FindAllProductResDto as FindAllDto,
   FindCatalogProductResDto as FindCatalogDto,
 } from './products.interface';
+import { ProductQueryDto } from './dto/product-query.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -40,19 +41,9 @@ export class ProductsController {
 
   @Get('catalog')
   findCatalog(
-    @Query() pagination: PaginationDto,
+    @Query() query: ProductQueryDto,
   ): Promise<WebResponse<FindCatalogDto[]>> {
-    return this.productsService.findCatalog(pagination);
-  }
-
-  // @Get('catalog')
-  // findCatalog(@Query() pagination: PaginationDto): Promise<WebResponse> {
-  //   return this.productsService.findCatalog(pagination);
-  // }
-
-  @Get(':id')
-  findDetail(@Param('id') id: string): Promise<WebResponse> {
-    return this.productsService.findDetail(id);
+    return this.productsService.findCatalog(query);
   }
 
   @Patch(':id')

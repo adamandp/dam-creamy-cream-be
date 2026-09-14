@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PinoLogger } from 'nestjs-pino';
 import { UploadService } from 'src/common/upload.service';
 import { CategoriesService } from '../categories/categories.service';
@@ -13,8 +14,12 @@ import {
   FindAllProductResDto as FindAllDto,
   FindCatalogProductResDto as FindCatalogDto,
   ValidateProductDto as ValidateDto,
+  // FindDetailProductResDto as FindDetailDto,
 } from './products.interface';
 import { validateUpdate } from 'src/utils/validate-update';
+import { DiscountType } from 'src/generated/prisma/enums';
+import { ProductQueryDto } from './dto/product-query.dto';
+import { Prisma } from 'src/generated/prisma/client';
 
 @Injectable()
 export class ProductsService {
@@ -84,75 +89,125 @@ export class ProductsService {
   async findCatalog({
     limit,
     page,
-  }: PaginationDto): Promise<WebResponse<FindCatalogDto[]>> {
+    cat,
+    min,
+    max,
+    q,
+    sort,
+  }: ProductQueryDto): Promise<WebResponse<FindCatalogDto[]>> {
     this.logger.trace('findAll products service method called');
 
     const skip = Math.max((page - 1) * limit, 0);
 
+    const where: Prisma.ProductWhereInput = {
+      isActive: true,
+    };
+
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    if (cat) {
+      const categoryIds = cat.split(',');
+
+      where.categoryId = {
+        in: categoryIds,
+      };
+    }
+
+    if (typeof min === 'number' || typeof max === 'number') {
+      where.price = {};
+      if (typeof min === 'number') where.price.gte = min;
+      if (typeof max === 'number') where.price.lte = max;
+    }
+
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
+
+    if (sort === 'asc') {
+      orderBy = { price: 'asc' };
+    } else if (sort === 'desc') {
+      orderBy = { price: 'desc' };
+    }
+
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
-        // skip,
-        // take: limit,
-        where: { isActive: true },
+        skip,
+        take: limit,
+        where,
+        orderBy,
         select: {
           id: true,
           name: true,
           imageUrl: true,
           description: true,
           price: true,
-          productDiscounts: {
-            // where: {
-            //   discounts: {
-            //     endDate: { gt: new Date() },
-            //   },
-            // },
-            select: {
-              isActive: true,
-              discounts: {
-                select: {
-                  discountType: true,
-                  value: true,
-                  productId: true,
-                  quantity: true,
-                },
-              },
-            },
-          },
-          inventory: {
-            select: {
-              quantity: true,
-              reservedQuantity: true,
-            },
-          },
           reviews: {
             select: {
               rating: true,
             },
           },
+          productDiscounts: {
+            where: { isActive: true },
+            select: {
+              discounts: {
+                select: {
+                  discountType: true,
+                  value: true,
+                },
+              },
+            },
+          },
         },
       }),
-      this.prisma.product.count({ where: { isActive: true } }),
+      this.prisma.product.count({ where }), // <- Harus memakai 'where' yang sama agar total halamannya akurat
     ]);
 
-    if (!total) throw new NotFoundException(this.name);
+    if (!total && page === 1) {
+      throw new NotFoundException(this.name);
+    }
 
-    const mappedProducts: FindCatalogDto[] = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price,
-      imageUrl: p.imageUrl,
-      productDiscounts: p.productDiscounts,
-      inventory: {
-        quantity:
-          (p.inventory?.quantity ?? 0) - (p.inventory?.reservedQuantity ?? 0),
-      },
-      rating:
-        p.reviews.length > 0
-          ? p.reviews.reduce((acc, curr) => acc + curr.rating, 0) /
-            p.reviews.length
-          : 0,
-    }));
+    const mappedProducts: FindCatalogDto[] = products.map((product) => {
+      const totalReviews = product.reviews.length;
+      const rate = totalReviews
+        ? product.reviews.reduce((acc, item) => acc + (item.rating || 0), 0) /
+          totalReviews
+        : 0;
+
+      const activeDiscount = product.productDiscounts?.discounts;
+      let discountPrice: number | null = null;
+      let discountType: DiscountType | null = null;
+      let discountValue: number | null = null;
+      let discountAmount = 0;
+
+      if (activeDiscount?.value) {
+        discountType = activeDiscount.discountType;
+        discountValue = activeDiscount.value;
+        switch (activeDiscount.discountType) {
+          case DiscountType.FIXED:
+            discountAmount = activeDiscount.value;
+            break;
+          case DiscountType.PERCENTAGE:
+            discountAmount = (activeDiscount.value * product.price) / 100;
+            break;
+        }
+        discountPrice = product.price - discountAmount;
+      }
+
+      return {
+        id: product.id,
+        name: product.name,
+        imageUrl: product.imageUrl || '',
+        description: product.description || '',
+        rate,
+        price: product.price,
+        discountPrice,
+        discountType,
+        discountValue,
+      };
+    });
 
     return {
       message: Messages.get(this.name),
@@ -166,102 +221,9 @@ export class ProductsService {
     };
   }
 
-  // async findCatalog({ limit, page }: PaginationDto): Promise<WebResponse> {
-  //   this.logger.trace('findAll products service method called');
-
-  //   const skip = Math.max((page - 1) * limit, 0);
-
-  //   const [productsDiscount, total] = await Promise.all([
-  //     this.prisma.product.findMany({
-  //       include: {
-  //         productDiscounts: true,
-  //       },
-  //     }),
-
-  //     this.prisma.product.count({ where: { isActive: true } }),
-  //   ]);
-
-  //   if (!total) throw new NotFoundException(this.name);
-
-  //   return {
-  //     message: Messages.get(this.name),
-  //     data: productsDiscount.filter((p) => p.productDiscounts !== null),
-  //     paging: {
-  //       currentPage: page,
-  //       pageSize: limit,
-  //       totalItems: total,
-  //       totalPages: Math.ceil(total / (limit || 1)),
-  //     },
-  //   };
-  // }
-
-  async findDetail(id: string) {
-    return await this.prisma.product
-      .findUniqueOrThrow({
-        where: { id },
-        select: {
-          id: true,
-          categoryId: true,
-          discountId: true,
-          name: true,
-          imageUrl: true,
-          description: true,
-          price: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-          productDiscounts: {
-            select: {
-              discounts: {
-                select: {
-                  value: true,
-                  discountType: true,
-                },
-              },
-            },
-          },
-          categories: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          inventory: {
-            select: {
-              quantity: true,
-              reservedQuantity: true,
-            },
-          },
-          productAnalytics: {
-            where: {
-              productId: id,
-            },
-          },
-          reviews: {
-            where: {
-              productId: id,
-            },
-            select: {
-              id: true,
-              rating: true,
-              comment: true,
-              createdAt: true,
-              users: {
-                select: {
-                  id: true,
-                  username: true,
-                },
-              },
-            },
-          },
-        },
-      })
-      .then((product) => ({ message: Messages.get(this.name), data: product }));
-  }
-
   async update(id: string, body: UpdateProductDto): Promise<WebResponse> {
-    const exsitingData = (await this.findDetail(id)).data;
-    validateUpdate(body, exsitingData);
+    const exsitingData = (await this.validateProduct(id)).data;
+    validateUpdate(body, exsitingData!);
     return await this.prisma.product
       .update({
         where: { id },
