@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { PinoLogger } from 'nestjs-pino';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { ProductsService } from '../products/products.service';
 import { RemoveFromCartDto } from './dto/remove-from-cart';
 import { WebResponse } from 'src/common/common.interface';
 import { Messages } from 'src/utils/message.helper';
 import { PaginationDto } from 'src/common/common.dto';
-import { NotFoundException } from 'src/exceptions';
 import { FindByUserCartDto as FindByUserDto } from './carts.interface';
 import { JwtPayload } from '../session/session.interface';
 
@@ -38,7 +38,7 @@ export class CartsService {
   }
 
   async addToCart(userId: string, body: AddToCartDto): Promise<WebResponse> {
-    await this.user.findDetail(userId);
+    await this.user.validateUser(userId);
     await this.product.validateProduct(body.productId);
     return await this.prisma
       .$transaction(async (tx) => {
@@ -65,9 +65,9 @@ export class CartsService {
           },
         });
       })
-      .then(() => {
+      .then((data) => {
         this.logCartAction('add', userId, body.productId, body.quantity);
-        return { message: Messages.create(this.name) };
+        return { message: Messages.create(this.name), data: data };
       });
   }
 
@@ -75,7 +75,7 @@ export class CartsService {
     userId: string,
     body: RemoveFromCartDto,
   ): Promise<WebResponse> {
-    await this.user.findDetail(userId);
+    await this.user.validateUser(userId);
     await this.product.validateProduct(body.productId);
     return await this.prisma
       .$transaction(async (tx) => {
@@ -102,36 +102,52 @@ export class CartsService {
           });
         }
       })
-      .then(() => {
+      .then((data) => {
         this.logCartAction('remove', userId, body.productId, body.quantity);
-        return { message: Messages.create(this.name) };
+        return { message: Messages.delete(this.name), data };
       });
   }
 
   async findByUser(
     payload: JwtPayload,
     { limit, page }: PaginationDto,
-  ): Promise<WebResponse<FindByUserDto>> {
+  ): Promise<WebResponse<FindByUserDto[]>> {
     const skip = Math.max((page - 1) * limit, 0);
-    const [data, total] = await Promise.all([
-      this.prisma.cart.findFirstOrThrow({
-        where: { id: payload.sub },
+
+    const [cart, total] = await Promise.all([
+      this.prisma.cart.findFirst({
+        where: {
+          userId: payload.sub,
+        },
         select: {
-          id: true,
           cartItems: {
             skip,
             take: limit,
             select: {
-              id: true,
               quantity: true,
               products: {
                 select: {
                   id: true,
                   name: true,
-                  price: true,
-                  categoryId: true,
                   imageUrl: true,
-                  discountId: true,
+                  price: true,
+                  categories: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  productDiscounts: {
+                    select: {
+                      discounts: {
+                        select: {
+                          discountType: true,
+                          value: true,
+                          startDate: true,
+                          endDate: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -139,15 +155,66 @@ export class CartsService {
         },
       }),
       this.prisma.cartItem.count({
-        where: { carts: { id: payload.sub } },
+        where: {
+          carts: {
+            userId: payload.sub,
+          },
+        },
       }),
     ]);
 
-    if (total <= 0) throw new NotFoundException(this.name);
+    if (!cart || total === 0) {
+      return {
+        message: Messages.get(this.name),
+        data: [],
+        paging: {
+          currentPage: page,
+          pageSize: limit,
+          totalItems: 0,
+          totalPages: 0,
+        },
+      };
+    }
+
+    const now = new Date();
+
+    const items: FindByUserDto[] = cart.cartItems.map((item) => {
+      const product = item.products;
+      const discount = product.productDiscounts?.discounts;
+
+      let discountPrice: number | null = null;
+
+      if (
+        discount &&
+        discount.value !== null &&
+        discount.startDate <= now &&
+        discount.endDate >= now
+      ) {
+        switch (discount.discountType) {
+          case 'PERCENTAGE':
+            discountPrice =
+              product.price - (product.price * discount.value) / 100;
+            break;
+
+          default:
+            discountPrice = Math.max(product.price - discount.value, 0);
+        }
+      }
+
+      return {
+        id: product.id,
+        name: product.name,
+        imageUrl: product.imageUrl,
+        category: product.categories.name,
+        price: product.price,
+        discountPrice,
+        qty: item.quantity,
+      };
+    });
 
     return {
-      message: Messages.get('User'),
-      data,
+      message: Messages.get('User Cart'),
+      data: items,
       paging: {
         currentPage: page,
         pageSize: limit,
@@ -155,44 +222,5 @@ export class CartsService {
         totalPages: Math.ceil(total / (limit || 1)),
       },
     };
-
-    //   return await Promise.all([
-    //     this.prisma.cart.findUniqueOrThrow({
-    //       where: { userId: sub },
-    //       select: {
-    //         id: true,
-    //         userId: true,
-    //         cartItems: {
-    //           skip,
-    //           take: limit,
-    //           select: {
-    //             id: true,
-    //             productId: true,
-    //             quantity: true,
-    //             products: {
-    //               select: {
-    //                 id: true,
-    //                 name: true,
-    //                 price: true,
-    //                 categories: {
-    //                   select: {
-    //                     id: true,
-    //                     name: true,
-    //                   },
-    //                 },
-    //                 imageUrl: true,
-    //                 discountId: true,
-    //               },
-    //             },
-    //           },
-    //         },
-    //       },
-    //     }),
-    //     this.prisma.cartItem.count({
-    //       where: { carts: { userId: sub } },
-    //     }),
-    //   ]).then(([data, total]) => {
-    //     if (total <= 0) throw new NotFoundException(this.name);
-    //   });
   }
 }

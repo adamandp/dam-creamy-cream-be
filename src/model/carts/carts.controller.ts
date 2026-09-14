@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  ParseUUIDPipe,
-  Query,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Request } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { PaginationDto } from 'src/common/common.dto';
@@ -26,28 +17,27 @@ export class CartsController {
     this.logger.setContext(CartsController.name);
   }
 
-  @Post('add/:id')
+  @Post('/user/add')
   async addToCart(
-    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() payload: JwtPayload,
     @Body() body: AddToCartDto,
   ): Promise<WebResponse> {
-    return this.cartsService.addToCart(id, body);
+    return this.cartsService.addToCart(payload.sub, body);
   }
 
-  @Post('remove/:id')
+  @Post('/user/remove')
   async removeFromCart(
-    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() payload: JwtPayload,
     @Body() body: AddToCartDto,
   ): Promise<WebResponse> {
-    return this.cartsService.removeFromCart(id, body);
+    return this.cartsService.removeFromCart(payload.sub, body);
   }
 
   @Get('/user')
   findByUser(
     @CurrentUser() payload: JwtPayload,
     @Query() pagination: PaginationDto,
-  ): Promise<WebResponse<FindByUserDto>> {
-    this.logger.trace(`Fetching cart for user ${payload.sub}`);
+  ): Promise<WebResponse<FindByUserDto[]>> {
     return this.cartsService.findByUser(payload, pagination);
   }
 }
