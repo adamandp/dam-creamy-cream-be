@@ -14,13 +14,15 @@ import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { PaginationDto } from 'src/common/common.dto';
-import type { CookieRequest, WebResponse } from 'src/common/common.interface';
+import type { WebResponse } from 'src/common/common.interface';
 import {
   FindAllAddressResDto as FindAllDto,
   FindByIdAddressResDto as FindByIdDto,
   FindByUserAddressResDto as FindByUserDto,
 } from './addresses.interface';
 import { PinoLogger } from 'nestjs-pino';
+import { CurrentUser } from 'src/decorators/current-user.decorator';
+import type { JwtPayload } from '../session/session.interface';
 
 @Controller('addresses')
 export class AddressesController {
@@ -43,18 +45,18 @@ export class AddressesController {
     return this.addressesService.findAll(pagination);
   }
 
+  @Get('user')
+  findByUserId(
+    @CurrentUser() request: JwtPayload,
+  ): Promise<WebResponse<FindByUserDto>> {
+    return this.addressesService.findByUser(request);
+  }
+
   @Get(':id')
   findById(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<WebResponse<FindByIdDto>> {
     return this.addressesService.findById(id);
-  }
-
-  @Get('user/:id')
-  findByUserId(
-    @Request() request: CookieRequest,
-  ): Promise<WebResponse<FindByUserDto>> {
-    return this.addressesService.findByUser(request);
   }
 
   @Patch(':id')

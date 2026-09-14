@@ -4,7 +4,6 @@ import {
   baseName,
   baseUUID,
   coerceBoolean,
-  coerceNumberMinMax,
   stringMinMax,
 } from 'src/utils/zod.helper';
 import z from 'zod';

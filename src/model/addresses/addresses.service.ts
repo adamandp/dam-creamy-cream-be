@@ -2,11 +2,12 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { PaginationDto } from 'src/common/common.dto';
-import { CookieRequest, WebResponse } from 'src/common/common.interface';
-import { PrismaService } from 'src/common/prisma.module';
+import { WebResponse } from 'src/common/common.interface';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { ErrorMessage, Messages } from 'src/utils/message.helper';
 import { UsersService } from '../users/users.service';
-import { NotFoundException, UnauthorizedException } from 'src/exceptions';
+import { NotFoundException } from 'src/exceptions';
 import {
   FindAllAddressResDto as FindAllDto,
   FindByIdAddressResDto as FindByIdDto,
@@ -94,15 +95,7 @@ export class AddressesService {
       }));
   }
 
-  async findByUser(
-    request: CookieRequest,
-  ): Promise<WebResponse<FindByUserDto>> {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer '))
-      throw new UnauthorizedException();
-    const { sub }: JwtPayload = await this.jwt.decode(
-      authHeader.replace('Bearer ', ''),
-    );
+  async findByUser({ sub }: JwtPayload): Promise<WebResponse<FindByUserDto>> {
     return await this.prisma.address
       .findMany({ where: { userId: sub } })
       .then((address) => {
