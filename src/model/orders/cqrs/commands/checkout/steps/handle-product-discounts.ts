@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, ProductDiscount } from '@prisma/client';
+import { Prisma, ProductDiscount } from 'src/generated/prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import { NotFoundException } from 'src/exceptions';
 import { OrderItemInputDto } from 'src/model/orders/dto/checkout.dto';

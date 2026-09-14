@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { Messages } from 'src/utils/message.helper';
 import { WebResponse } from 'src/common/common.interface';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';

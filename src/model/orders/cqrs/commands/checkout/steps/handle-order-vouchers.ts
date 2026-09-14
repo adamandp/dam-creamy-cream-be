@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/generated/prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import { OrderInputDto } from 'src/model/orders/dto/checkout.dto';
 
@@ -46,7 +46,7 @@ export class HandleOrderVouchers {
         method,
         type: 'order-voucher-link-failed',
         message: `❌ Failed to link vouchers to order ${orderId}`,
-        error: error,
+        error: error as string,
       });
       throw error;
     }

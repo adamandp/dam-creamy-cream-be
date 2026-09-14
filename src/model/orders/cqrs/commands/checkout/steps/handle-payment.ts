@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/generated/prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import { PaymentInputDto } from 'src/model/orders/dto/checkout.dto';
 
@@ -26,6 +26,7 @@ export class HandlePaymentOrder {
       await tx.payment.create({
         data: {
           orderId,
+          methodType: payment.method, // error here
           ...payment,
           amount: orderPrice,
         },
@@ -41,7 +42,7 @@ export class HandlePaymentOrder {
         method,
         type: 'payment-creation-failed',
         message: `❌ Failed to create payment for order ${orderId}`,
-        error: error,
+        error: error as string,
       });
       throw error;
     }

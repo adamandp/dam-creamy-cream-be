@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import { NotFoundException } from 'src/exceptions';
+import { Prisma } from 'src/generated/prisma/client';
 import { OrderItemInputDto } from 'src/model/orders/dto/checkout.dto';
 import { ProductBasicInfo } from 'src/model/orders/orders.interface';
 
@@ -10,6 +10,7 @@ export class HandleProductsOrder {
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(HandleProductsOrder.name);
   }
+
   async validate(
     tx: Prisma.TransactionClient,
     orderItems: OrderItemInputDto,

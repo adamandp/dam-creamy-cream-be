@@ -52,7 +52,7 @@ export class HandleOrderItems {
         method,
         type: 'order-item-creation-failed',
         message: `❌ Failed to create order items for order ${orderId}`,
-        error: error,
+        // error: error,
       });
       throw error;
     }
@@ -66,7 +66,8 @@ export class HandleOrderItems {
     const method = 'createFromFreeItemDiscounts';
 
     const freeItemDiscounts = discounts.filter(
-      (discount) => discount.discount_type === DiscountType.FREE_ITEM,
+      (discount: RawDiscount) =>
+        discount.discount_type === DiscountType.FREE_ITEM,
     );
 
     if (!discounts.length && freeItemDiscounts.length) {
@@ -106,7 +107,7 @@ export class HandleOrderItems {
         method,
         type: 'order-item-creation-failed',
         message: `❌ Failed to create order items for order ${orderId}`,
-        error: error,
+        error: error as string,
       });
       throw error;
     }
@@ -120,7 +121,7 @@ export class HandleOrderItems {
     const method = 'createFromFreeItemVouchers';
 
     const freeItemVouchers = vouchers.filter(
-      (discount) => discount.type === VoucherType.FREE_ITEM,
+      (discount: Voucher) => discount.type === VoucherType.FREE_ITEM,
     );
 
     if (!vouchers.length && freeItemVouchers.length) {
@@ -159,7 +160,7 @@ export class HandleOrderItems {
         method,
         type: 'order-item-creation-failed',
         message: `❌ Failed to create order items for order ${orderId}`,
-        error: error,
+        error: error as string,
       });
       throw error;
     }

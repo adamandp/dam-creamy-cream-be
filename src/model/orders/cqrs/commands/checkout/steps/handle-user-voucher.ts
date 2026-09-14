@@ -95,7 +95,7 @@ export class HandleUserVouchersOrder {
     userVouchersData: UserVoucher[] | [],
   ): Promise<void> {
     const method = 'updateUserVouchers';
-    const voucherIds = userVouchersData.map((v) => v.voucherId);
+    const voucherIds = userVouchersData.map((v: UserVoucher) => v.voucherId);
 
     this.logger.trace({
       method,
@@ -111,7 +111,9 @@ export class HandleUserVouchersOrder {
     }
 
     for (const id of voucherIds) {
-      const userVoucher = userVouchersData.find((v) => v.voucherId === id);
+      const userVoucher = userVouchersData.find(
+        (v: UserVoucher) => v.voucherId === id,
+      );
 
       await tx.userVoucher.update({
         where: { id: userVoucher!.id },
