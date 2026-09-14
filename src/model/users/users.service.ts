@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import {
   ConflictException,
@@ -16,7 +17,7 @@ import { UploadService } from 'src/common/upload.service';
 import { WebResponse } from 'src/common/common.interface';
 import { PaginationDto } from 'src/common/common.dto';
 import {
-  ValidateUserResDto as ValidateDto,
+  // ValidateUserResDto as ValidateDto,
   FindAllUserResDto as FindAllDto,
   FindDetailResDto as FindDetailDto,
   FindProfileUserDto as FindProfileDto,
@@ -82,13 +83,10 @@ export class UsersService {
       throw new ConflictException('phoneNumber');
   }
 
-  async validateUser(id: string): Promise<WebResponse<ValidateDto>> {
-    return this.prisma.user
-      .findUniqueOrThrow({
-        where: { id },
-        omit: { password: true },
-      })
-      .then((data) => ({ message: Messages.get(this.name), data }));
+  async validateUser(id: string): Promise<void> {
+    await this.prisma.user.findUniqueOrThrow({
+      where: { id },
+    });
   }
 
   async create(body: CreateUserDto): Promise<WebResponse> {

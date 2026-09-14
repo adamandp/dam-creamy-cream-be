@@ -9,7 +9,8 @@ import {
   JwtPayload,
   RefreshAccessTokenResDto,
 } from './session.interface';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { CookieRequest, WebResponse } from 'src/common/common.interface';
 import { UAParser } from 'ua-parser-js';
 import {
@@ -29,11 +30,11 @@ export class SessionService {
     this.logger.setContext(SessionService.name);
     this.jwtConfig = {
       access: {
-        secret: this.config.get('ACCESS_JWT_SECRET') as string,
+        secret: this.config.get('ACCESS_JWT_SECRET'),
         expiresIn: '15m',
       },
       refresh: {
-        secret: this.config.get('REFRESH_JWT_SECRET') as string,
+        secret: this.config.get('REFRESH_JWT_SECRET'),
         expiresIn: '7d',
       },
     };
@@ -111,7 +112,10 @@ export class SessionService {
         }
         await tx.userToken.update({
           where: { token: exstingRefreshToken },
-          data: { token: accessToken },
+          data: {
+            token: refreshToken,
+            expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
         });
       });
     } else {
@@ -132,7 +136,7 @@ export class SessionService {
         await tx.userToken.create({
           data: {
             userId: payload.sub,
-            token: accessToken,
+            token: refreshToken,
             expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             browserInfo: JSON.stringify(this.createBrowserInfo(browserInfo)),
           },
@@ -151,8 +155,10 @@ export class SessionService {
     request: CreateTokenDto,
   ): Promise<WebResponse<CreateTokenResDto>> {
     const { payload, browserInfo, refreshToken: exstingRefreshToken } = request;
+
     const accessToken = await this.createAccess(payload);
     const refreshToken = await this.createRefresh(payload);
+
     if (exstingRefreshToken) {
       await this.prisma.$transaction(async (tx) => {
         const validateToken = await tx.userToken.findFirst({
@@ -160,17 +166,20 @@ export class SessionService {
             token: exstingRefreshToken,
           },
         });
-        if (
-          (validateToken?.expiredAt || new Date(Date.now() + 1000)) <
-          new Date(Date.now())
-        ) {
+        this.logger.debug(
+          `Validated Token: ${validateToken ? 'Found' : 'Not Found'}`,
+        );
+        if (validateToken!.expiredAt > new Date(Date.now())) {
           throw new ForbiddenException(
             '✅ You are already logged in. No need to log in again! 🎉',
           );
         }
         await tx.userToken.update({
           where: { token: exstingRefreshToken },
-          data: { token: accessToken },
+          data: {
+            token: refreshToken,
+            expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
         });
       });
     } else {
@@ -178,7 +187,7 @@ export class SessionService {
         await tx.userToken.create({
           data: {
             userId: payload.sub,
-            token: accessToken,
+            token: refreshToken,
             expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             browserInfo: JSON.stringify(this.createBrowserInfo(browserInfo)),
           },
@@ -212,6 +221,7 @@ export class SessionService {
   }
 
   async clearToken(refreshToken: string): Promise<WebResponse> {
+    if (!refreshToken) throw new UnauthorizedException();
     await this.jwt
       .verifyAsync(refreshToken, this.jwtVerifyConfig.refresh)
       .catch(() => {
