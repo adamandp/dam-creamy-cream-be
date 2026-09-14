@@ -4,8 +4,8 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -99,14 +99,15 @@ model Product {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  categories       Category           @relation(fields: [categoryId], references: [id])
-  productDiscounts ProductDiscount?
-  inventory        Inventory?
-  cartItems        CartItem[]
-  orderItems       OrderItem[]
-  reviews          Review[]
-  vouchers         Voucher[]
-  productAnalytics ProductAnalytics[]
+  categories         Category            @relation(fields: [categoryId], references: [id])
+  productDiscounts   ProductDiscount?
+  inventory          Inventory?
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  reviews            Review[]
+  vouchers           Voucher[]
+  productAnalytics   ProductAnalytics[]
+  productInformation ProductInformation?
 
   @@map("products")
 }
@@ -303,6 +304,21 @@ model ProductDiscount {
   products  Product  @relation(fields: [productId], references: [id])
 
   @@map("product_discounts")
+}
+
+model ProductInformation {
+  id                 String   @id @default(uuid()) @db.Uuid
+  productId          String   @unique @map("product_id") @db.Uuid
+  highlights         Json
+  servingSuggestions Json @map("serving_suggestions")
+  productDetails     Json @map("product_details")
+  whyChoose          String   @db.Text @map("why_choose")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  products Product @relation(fields: [productId], references: [id])
+
+  @@map("product_information")
 }
 
 model Voucher {
