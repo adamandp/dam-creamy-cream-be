@@ -15,13 +15,17 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, documentFactory, swaggerOptions);
 
   app.enableCors({
-    origin: '*',
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
   });
   app.useLogger(logger);
   app.use(cookieParser(secret.cookie));
   await app.listen(process.env.PORT ?? 3000);
 }
 
-bootstrap();
+bootstrap().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
