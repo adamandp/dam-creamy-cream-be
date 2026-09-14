@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { PinoLogger } from 'nestjs-pino';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { Messages } from 'src/utils/message.helper';
 import { validateUpdate } from 'src/utils/validate-update';
 import { NotFoundException } from 'src/exceptions';

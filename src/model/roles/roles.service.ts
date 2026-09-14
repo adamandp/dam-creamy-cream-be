@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { PrismaService } from '../../common/prisma.module';
+// import { PrismaService } from '../../common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { WebResponse } from 'src/common/common.interface';
 import { CreateRoleDto } from './dto/create-role.dto';

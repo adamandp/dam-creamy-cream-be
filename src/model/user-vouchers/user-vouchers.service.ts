@@ -8,7 +8,8 @@ import {
   FindByVoucherUserVoucherDto as FindByVoucherDto,
 } from './user-vouchers.interface';
 import { CookieRequest, WebResponse } from 'src/common/common.interface';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PinoLogger } from 'nestjs-pino';
 import { PaginationDto } from 'src/common/common.dto';
 import { Messages } from 'src/utils/message.helper';

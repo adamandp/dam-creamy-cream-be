@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PinoLogger } from 'nestjs-pino';
 import { WebResponse } from 'src/common/common.interface';
 import { Messages } from 'src/utils/message.helper';
