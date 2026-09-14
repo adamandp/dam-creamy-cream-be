@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -33,6 +35,14 @@ export class ReviewsController {
     return this.reviewsService.findAll(pagination);
   }
 
+  @Get('product/:id')
+  findByProduct(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() pagination: PaginationDto,
+  ): Promise<WebResponse<FindByProductDto>> {
+    return this.reviewsService.findByProduct(id, pagination);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string): Promise<WebResponse<FindByIdDto>> {
     return this.reviewsService.findById(id);
@@ -44,14 +54,6 @@ export class ReviewsController {
     pagination: PaginationDto,
   ): Promise<WebResponse<FindByUserDto>> {
     return this.reviewsService.findByUser(request, pagination);
-  }
-
-  @Get('product/:id')
-  findByProduct(
-    @Param('id') id: string,
-    pagination: PaginationDto,
-  ): Promise<WebResponse<FindByProductDto>> {
-    return this.reviewsService.findByProduct(id, pagination);
   }
 
   @Patch(':id')

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { PrismaService } from 'src/common/prisma.module';
+// import { PrismaService } from 'src/common/prisma.module';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PinoLogger } from 'nestjs-pino';
 import { CookieRequest, WebResponse } from 'src/common/common.interface';
 import { Messages } from 'src/utils/message.helper';
@@ -127,15 +128,35 @@ export class ReviewsService {
     return await Promise.all([
       this.prisma.review.findMany({
         where: { productId },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          users: {
+            select: {
+              username: true,
+              imageUrl: true,
+            },
+          },
+        },
         skip,
         take: limit,
       }),
       this.prisma.review.count(),
     ]).then(([data, total]) => {
       if (total <= 0) throw new NotFoundException(this.name);
+      const parsedData = data.map((review) => ({
+        id: review.id,
+        rate: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        name: review.users.username,
+        imageUrl: review.users.imageUrl,
+      }));
       return {
         message: Messages.get(this.name),
-        data,
+        data: parsedData,
         paging: {
           currentPage: page,
           pageSize: limit,
